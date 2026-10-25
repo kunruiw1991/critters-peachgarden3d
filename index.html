@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title></title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #FAF3EB;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    #gameContainer {
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* HUD Top Bar */
+    .hud-bar {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .hud-left, .hud-center, .hud-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      pointer-events: auto;
+    }
+
+    /* Gardener Avatar Medallion */
+    .gardener-medallion {
+      position: relative;
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 4px solid #5C3D2E;
+      box-shadow: 0 4px 12px rgba(92, 61, 46, 0.2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease;
+    }
+    .gardener-medallion:active {
+      transform: scale(0.92);
+    }
+    .gardener-avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .straw-hat-badge {
+      position: absolute;
+      top: -12px;
+      right: -8px;
+      font-size: 26px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+    }
+
+    /* Basket Pips in HUD */
+    .basket-hud-pill {
+      background: #FFF9F0;
+      border: 3px solid #5C3D2E;
+      border-radius: 24px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 3px 8px rgba(92, 61, 46, 0.15);
+    }
+    .basket-icon {
+      font-size: 22px;
+    }
+    .basket-pips {
+      display: flex;
+      gap: 6px;
+    }
+    .basket-pip {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #E8D8C8;
+      border: 2px solid #5C3D2E;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .basket-pip.filled {
+      background: #FF8595;
+      transform: scale(1.15);
+      box-shadow: 0 0 6px #FFAEC9;
+    }
+
+    /* Round Action Buttons */
+    .btn-circle {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 3.5px solid #5C3D2E;
+      box-shadow: 0 4px 10px rgba(92, 61, 46, 0.18);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: transform 0.15s ease;
+    }
+    .btn-circle:active {
+      transform: scale(0.9);
+    }
+
+    /* Bottom Desk Quick-Tools */
+    .bottom-bar {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .tool-card {
+      pointer-events: auto;
+      width: 84px;
+      height: 84px;
+      border-radius: 20px;
+      background: #FFFFFF;
+      border: 4px solid #5C3D2E;
+      box-shadow: 0 6px 14px rgba(92, 61, 46, 0.22);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .tool-card:active {
+      transform: translateY(4px) scale(0.94);
+      box-shadow: 0 2px 6px rgba(92, 61, 46, 0.3);
+    }
+
+    /* Thought Bubbles for 3 Visitors */
+    .visitor-bubble {
+      position: absolute;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 3.5px solid #5C3D2E;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 8;
+      transition: transform 0.15s ease;
+    }
+    .visitor-bubble.visible {
+      display: flex;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .visitor-bubble:active {
+      transform: scale(0.9);
+    }
+
+    #bubble_0 { top: 38%; left: 24%; }
+    #bubble_1 { top: 35%; left: 48%; }
+    #bubble_2 { top: 38%; left: 72%; }
+
+    .bubble-item-icon {
+      font-size: 34px;
+    }
+    .icon-peach::before { content: "🍑"; }
+    .icon-star_stone::before { content: "☀️"; }
+    .icon-moon_ruyi::before { content: "🌙"; }
+    .icon-crystal_gourd::before { content: "💎"; }
+    .icon-copper_coin::before { content: "🍀"; }
+
+    /* SVG Patience Ring */
+    .bubble-svg {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      pointer-events: none;
+    }
+    .bubble-patience-ring {
+      fill: none;
+      stroke: #52B788;
+      stroke-width: 4.5;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 0.1s linear;
+    }
+
+    /* Podium Modal */
+    .podium-modal {
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(43, 30, 22, 0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .podium-modal.visible {
+      display: flex;
+    }
+
+    .podium-card {
+      width: 90%;
+      max-width: 640px;
+      height: 480px;
+      background: #FFFBF2;
+      border: 6px solid #5C3D2E;
+      border-radius: 32px;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 16px;
+      position: relative;
+    }
+
+    .podium-row {
+      width: 100%;
+      height: 320px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 14px;
+      margin-top: auto;
+      margin-bottom: 20px;
+    }
+
+    .podium-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      width: 84px;
+    }
+
+    .podium-avatar-wrap {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      margin-bottom: 6px;
+    }
+
+    .podium-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 3.5px solid #5C3D2E;
+      background: #FFFFFF;
+      object-fit: cover;
+    }
+
+    .podium-crown {
+      position: absolute;
+      top: -20px;
+      left: 18px;
+      font-size: 26px;
+      animation: floatCrown 1.4s ease-in-out infinite alternate;
+    }
+
+    .podium-farmer-hat {
+      position: absolute;
+      top: -14px;
+      right: -10px;
+      font-size: 24px;
+      transform: rotate(16deg);
+    }
+
+    .podium-pillar {
+      width: 100%;
+      border: 4px solid #5C3D2E;
+      border-bottom: none;
+      border-radius: 16px 16px 0 0;
+      background: #D4A373;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 6px;
+      flex-shrink: 0;
+    }
+
+    .rank-1 .podium-pillar { background: linear-gradient(180deg, #FFDF73 0%, #E5A93C 100%); }
+    .rank-2 .podium-pillar { background: linear-gradient(180deg, #E6E8EA 0%, #B0B5BA 100%); }
+    .rank-3 .podium-pillar { background: linear-gradient(180deg, #E8A87C 0%, #C37845 100%); }
+    .rank-4 .podium-pillar { background: #C8BAAF; }
+    .rank-5 .podium-pillar { background: #A89F96; }
+
+    .podium-discs-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      align-items: center;
+    }
+    .podium-disc {
+      width: 44px;
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.65);
+      border: 1.5px solid #5C3D2E;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.3); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes floatCrown {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-6px); }
+    }
+  </style>
+</head>
+<body>
+  <div id="gameContainer"></div>
+
+  <!-- HUD Bar -->
+  <div class="hud-bar">
+    <div class="hud-left">
+      <div id="gardenerAvatarWrap" class="gardener-medallion">
+        <span class="straw-hat-badge">👒</span>
+        <img id="gardenerAvatar" class="gardener-avatar" src="./assets/dogday_avatar.png" alt="" />
+      </div>
+      <div class="basket-hud-pill">
+        <span class="basket-icon">🧺</span>
+        <div id="basketPips" class="basket-pips"></div>
+      </div>
+    </div>
+
+    <div class="hud-right">
+      <div id="soundToggleBtn" class="btn-circle">🔔</div>
+      <div id="restartBtn" class="btn-circle">🔄</div>
+    </div>
+  </div>
+
+  <!-- Bottom Garden Desk Tools -->
+  <div class="bottom-bar">
+    <div id="cloudToolBtn" class="tool-card">🌧️</div>
+    <div id="hoeToolBtn" class="tool-card">⛏️</div>
+    <div id="oxFeedBtn" class="tool-card">🐂</div>
+  </div>
+
+  <!-- 3 Thought Bubbles for Visitors -->
+  <div id="bubble_0" class="visitor-bubble">
+    <svg class="bubble-svg" viewBox="0 0 100 100">
+      <circle class="bubble-patience-ring" cx="50" cy="50" r="45" pathLength="100" />
+    </svg>
+    <div class="bubble-item-icon"></div>
+  </div>
+
+  <div id="bubble_1" class="visitor-bubble">
+    <svg class="bubble-svg" viewBox="0 0 100 100">
+      <circle class="bubble-patience-ring" cx="50" cy="50" r="45" pathLength="100" />
+    </svg>
+    <div class="bubble-item-icon"></div>
+  </div>
+
+  <div id="bubble_2" class="visitor-bubble">
+    <svg class="bubble-svg" viewBox="0 0 100 100">
+      <circle class="bubble-patience-ring" cx="50" cy="50" r="45" pathLength="100" />
+    </svg>
+    <div class="bubble-item-icon"></div>
+  </div>
+
+  <!-- 5-Critter Olympic Podium Modal -->
+  <div id="podiumModal" class="podium-modal">
+    <div class="podium-card">
+      <div id="podiumColumns" class="podium-row"></div>
+      <div id="podiumRestartBtn" class="btn-circle" onclick="window.peachGame.startWave(1); document.getElementById('podiumModal').classList.remove('visible');">🔄</div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/game.js"></script>
+</body>
+</html>
